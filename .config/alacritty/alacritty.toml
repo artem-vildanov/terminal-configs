@@ -1,0 +1,22 @@
+[font]
+normal.family = "JetBrainsMono NFM"
+size = 15
+offset.y = 0
+
+[window.padding]
+x = 10
+y = 10
+
+[terminal.shell]
+program = "/usr/bin/tmux"
+
+[general]
+import = [
+  "~/.config/alacritty/themes/themes/gruvbox_material_medium_dark.toml"
+]
+
+[keyboard]
+bindings = [
+  { key = "V", mods = "Control", action = "Paste" },
+  { key = "C", mods = "Control", action = "Copy" },
+]
