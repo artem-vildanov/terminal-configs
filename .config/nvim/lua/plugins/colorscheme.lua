@@ -19,11 +19,11 @@ return {
   priority = 1000,
   config = function()
     require("catppuccin").setup({
-      flavour = "frappe",
+      flavour = "macchiato",
       custom_highlights = function(colors)
         return {
           -- Пример выделения для Go пакетов
-          ["@namespace"] = { -- Используется Treesitter для Go
+          ["@namespace"] = {
             -- fg = colors.blue,
             style = { "italic" }, -- Стиль текста
           },

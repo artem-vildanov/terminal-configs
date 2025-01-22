@@ -18,5 +18,6 @@ return {
     keymap.set("n", "[b", "<cmd>BufferLineCyclePrev<CR>", { desc = "Previous buffer" })
     keymap.set("n", "]b", "<cmd>BufferLineCycleNext<CR>", { desc = "Next buffer" })
     keymap.set("n", "<leader>bx", "<cmd>Bdelete<CR>", { desc = "Close current buffer" })
+    keymap.set("n", "<leader>ba", "<cmd>BufferLineCloseOthers<CR>", { desc = "Close all other buffers" })
   end,
 }
