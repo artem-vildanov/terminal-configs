@@ -1,8 +1,12 @@
 return {
   "nvim-treesitter/nvim-treesitter",
   event = { "BufReadPre", "BufNewFile" },
+  dependencies = {
+    "windwp/nvim-ts-autotag",
+  },
   build = ":TSUpdate",
   config = function()
+    require("nvim-ts-autotag").setup()
     -- import nvim-treesitter plugin
     local treesitter = require("nvim-treesitter.configs")
 
@@ -15,6 +19,7 @@ return {
       indent = { enable = true },
       -- ensure these language parsers are installed
       ensure_installed = {
+        "svelte",
         "json",
         "javascript",
         "typescript",
