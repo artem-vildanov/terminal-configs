@@ -12,10 +12,8 @@ return {
       FLOAT = "float",
     }
 
-    -- Устанавливаем начальное значение
-    local tree_position = TreePosition.LEFT
+    local tree_position = TreePosition.FLOAT
 
-    -- Функция для переключения позиции
     local function toggle_tree_position()
       if tree_position == TreePosition.LEFT then
         tree_position = TreePosition.FLOAT
@@ -35,7 +33,7 @@ return {
         },
       },
       window = {
-        position = "left",
+        position = TreePosition.FLOAT,
         mappings = {
           ["<CR>"] = "open",
           ["t"] = "open_tabnew",

@@ -1,0 +1,16 @@
+*
+
+!/.gitignore
+
+!/.tmux.conf
+
+!/.config/
+
+!/.config/nvim/
+!/.config/nvim/**
+
+!/.config/alacritty/
+!/.config/alacritty/alacritty.toml
+
+!/.config/yazi/
+!/.config/yazi/*

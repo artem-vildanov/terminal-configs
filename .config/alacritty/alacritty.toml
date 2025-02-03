@@ -1,6 +1,6 @@
 [font]
 normal.family = "JetBrainsMono NFM"
-size = 15
+size = 21
 offset.y = 0
 
 [window.padding]
@@ -8,7 +8,9 @@ x = 10
 y = 10
 
 [terminal.shell]
-program = "/usr/bin/tmux"
+# program = "/usr/bin/tmux"
+program = "/opt/homebrew/bin/tmux"
+
 
 [general]
 import = [
