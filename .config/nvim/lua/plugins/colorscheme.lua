@@ -3,7 +3,7 @@
 --   priority = 1000,
 --   config = function()
 --     require("catppuccin").setup({
---       flavour = "macchiato",
+--       flavour = "frappe",
 --       custom_highlights = function(colors)
 --         return {
 --           -- Пример выделения для Go пакетов
@@ -55,14 +55,23 @@
 --   end,
 -- }
 
+-- return {
+--   "zenbones-theme/zenbones.nvim",
+--   dependencies = "rktjmp/lush.nvim",
+--   lazy = false,
+--   priority = 1000,
+--   config = function()
+--     -- vim.cmd.colorscheme('zenbones')
+--     -- vim.cmd.colorscheme("seoulbones")
+--     vim.cmd.colorscheme('zenburned')
+--   end,
+-- }
+
 return {
-  "zenbones-theme/zenbones.nvim",
-  dependencies = "rktjmp/lush.nvim",
-  lazy = false,
+  "sainnhe/gruvbox-material",
   priority = 1000,
   config = function()
-    -- vim.cmd.colorscheme('zenbones')
-    -- vim.cmd.colorscheme("seoulbones")
-    vim.cmd.colorscheme('zenburned')
+    vim.g.gruvbox_material_enable_italic = true
+    vim.cmd.colorscheme("gruvbox-material")
   end,
 }
