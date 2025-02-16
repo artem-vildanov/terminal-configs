@@ -1,4 +1,4 @@
-return {
+local _ = {
   "nvimdev/lspsaga.nvim",
   dependencies = {
     "nvim-treesitter/nvim-treesitter", -- optional
@@ -17,3 +17,4 @@ return {
     vim.keymap.set("n", "K", "<cmd>Lspsaga hover_doc<CR>", { desc = "show hover" })
   end,
 }
+return {}

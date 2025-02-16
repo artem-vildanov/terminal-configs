@@ -5,6 +5,6 @@ return {
 	opts = {
 		-- indent = { char = "┊" },
 		indent = { char = "▏" },
-    scope = { show_start = false }
+    scope = { show_start = false, show_end = false }
 	},
 }

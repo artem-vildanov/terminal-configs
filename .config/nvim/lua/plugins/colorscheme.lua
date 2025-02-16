@@ -29,8 +29,8 @@
 --     vim.cmd("colorscheme kanagawa")
 --
 --     require("kanagawa").setup({
---       compile = false, -- enable compiling the colorscheme
---       undercurl = true, -- enable undercurls
+--       compile = false,
+--       undercurl = true,
 --       commentStyle = { italic = true },
 --       functionStyle = {},
 --       keywordStyle = { italic = true },
