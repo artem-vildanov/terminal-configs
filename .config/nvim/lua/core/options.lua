@@ -22,3 +22,9 @@ opt.clipboard:append("unnamedplus")
 
 opt.splitright = true
 opt.splitbelow = true
+
+if vim.g.neovide then
+  vim.o.guifont = "JetBrainsMono NFM:h14" -- text below applies for VimScript
+  vim.g.neovide_scale_factor = 1.7
+  vim.opt.linespace = 0
+end

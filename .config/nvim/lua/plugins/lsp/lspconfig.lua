@@ -1,171 +1,168 @@
 local MAX_HOVER_WIDTH_SYMBOLS = 50
 local MAX_HOVER_HEIGHT_SYMBOLS = 15
 
-local function replaceAt(str, startIdx, endIdx, replacement)
-  return str:sub(1, startIdx - 1) .. replacement .. str:sub(endIdx + 1)
+---@param code_fragment string
+---@param search_start integer
+---@param should_contain_comma boolean
+---@return nil | integer
+---@return nil | integer
+local function search_in_parentheses(
+  code_fragment,
+  search_start,
+  should_contain_comma
+)
+  local pos = search_start or 1
+
+  while true do
+    local old_substring_start, old_substring_end =
+      code_fragment:find("%b()", pos)
+    if not old_substring_start then
+      return nil, nil
+    end
+
+    local inside =
+      code_fragment:sub(old_substring_start + 1, old_substring_end - 1)
+    local has_comma = inside:find(",", 1, true)
+
+    if
+      (should_contain_comma and has_comma)
+      or (not should_contain_comma and not has_comma)
+    then
+      return old_substring_start, old_substring_end
+    end
+
+    pos = old_substring_end + 1
+  end
 end
 
+---@param code_fragment string
+---@param get_substring_start_end function
+---@return string
+---@return boolean
+local function format_code_fragment(code_fragment, get_substring_start_end)
+  local search_start = 1
+  local should_format_beginning = false
+
+  local first_substring_start, _ =
+    get_substring_start_end(search_start, code_fragment)
+
+  vim.notify(tostring(first_substring_start))
+
+  if first_substring_start > MAX_HOVER_WIDTH_SYMBOLS then
+    should_format_beginning = true
+  end
+
+  while true do
+    local old_substring_start, old_substring_end =
+      get_substring_start_end(search_start, code_fragment)
+    if not old_substring_start then
+      return code_fragment, true
+    end
+
+    local old_substring =
+      code_fragment:sub(old_substring_start, old_substring_end)
+    vim.notify(old_substring)
+    local new_substring =
+      old_substring:gsub("%(", "(\n  "):gsub(",%s*", ",\n  "):gsub("%)", "\n)")
+    vim.notify(new_substring)
+
+    code_fragment = code_fragment:sub(1, old_substring_start - 1)
+      .. new_substring
+      .. code_fragment:sub(old_substring_end + 1)
+
+    local _, new_substring_end = code_fragment:find(new_substring)
+
+    if #code_fragment - new_substring_end < MAX_HOVER_WIDTH_SYMBOLS then
+      if should_format_beginning then
+        return code_fragment, true
+      end
+
+      vim.notify("early")
+      return code_fragment, false
+    end
+
+    -- local new_substring_end = old_substring_start + #new_substring
+    --
+    -- if #code_fragment - new_substring_end < MAX_HOVER_WIDTH_SYMBOLS then
+    --   return code_fragment, false
+    -- end
+
+    search_start = old_substring_end + 1
+  end
+end
+
+---@param code_fragment string
+---@return string
+---@return boolean
+local function format_code_with_commas(code_fragment)
+  return format_code_fragment(
+    code_fragment,
+    function(search_start, updated_code_fragment)
+      return search_in_parentheses(updated_code_fragment, search_start, true)
+    end
+  )
+end
+
+---@param code_fragment string
+---@return string
+local function format_code_without_commas(code_fragment)
+  local code, _ = format_code_fragment(
+    code_fragment,
+    function(search_start, updated_code_fragment)
+      return search_in_parentheses(updated_code_fragment, search_start, false)
+    end
+  )
+  return code
+end
+
+---@param code_fragment string
+---@return string
+local function indent_code(code_fragment)
+  local code, _ = code_fragment:gsub("\n", "\n  "):gsub("^%s+", "  ")
+  return code
+end
+
+---@param lines table
+---@return table
 local function format_code_in_parentheses(lines)
-  -- vim.notify(table.concat(lines, "|"), vim.log.levels.INFO)
+  local is_inside_code_block = false
 
-  local isInsideCodeBlock = false
-  for codeIndex = 1, #lines, 1 do
-    local codeFragment = lines[codeIndex]
-
-    local function indentCode()
-      codeFragment = codeFragment:gsub("\n", "\n  "):gsub("^%s+", "  ")
+  for code_index, code_fragment in ipairs(lines) do
+    if code_fragment == "```go" then
+      is_inside_code_block = true
+    elseif code_fragment == "```" then
+      is_inside_code_block = false
     end
 
-    -- найти подстроки внутри круглых скоб, начиная с позиции searchStart,
-    -- при этом подстроки должны содержать хотя бы одну запятую
-    local function searchWithComma(searchStart)
-      local pos = searchStart or 1 -- Начальная позиция поиска
-
-      while true do
-        -- Найти следующую подстроку в круглых скобках
-        local oldSubstringStart, oldSubstringEnd =
-          codeFragment:find("%b()", pos)
-
-        -- Если ничего не нашли — вернуть nil
-        if not oldSubstringStart then
-          return nil, nil
-        end
-
-        -- Внутреннее содержимое скобок
-        local inside =
-          codeFragment:sub(oldSubstringStart + 1, oldSubstringEnd - 1)
-
-        -- Если внутри есть запятая, вернуть найденную подстроку
-        if inside:find(",", 1, true) then
-          return oldSubstringStart, oldSubstringEnd
-        end
-
-        -- если внутри не было запятой, то продолжаем поиск
-        -- после текущей найденной подстроки
-        pos = oldSubstringEnd + 1
-      end
-    end
-
-    -- найти подстроки внутри круглых скоб, начиная с позиции searchStart,
-    -- при этом подстроки не должны содержать запятой
-    local function searchWithoutComma(searchStart)
-      local pos = searchStart or 1 -- Начальная позиция поиска
-
-      while true do
-        -- Найти следующую подстроку в круглых скобках
-        local oldSubstringStart, oldSubstringEnd =
-          codeFragment:find("%b()", pos)
-
-        -- Если ничего не нашли — вернуть nil
-        if not oldSubstringStart then
-          return nil, nil
-        end
-
-        -- Внутреннее содержимое скобок
-        local inside =
-          codeFragment:sub(oldSubstringStart + 1, oldSubstringEnd - 1)
-
-        -- Если нет запятых, вернуть найденную подстроку
-        if not inside:find(",", 1, true) then
-          return oldSubstringStart, oldSubstringEnd
-        end
-
-        -- Продолжить поиск после текущей найденной подстроки
-        pos = oldSubstringEnd + 1
-      end
-    end
-
-    local function format(getSubstringStartEnd)
-      -- индекс символа, с которого начинать поиск
-      -- подстроки заключенной в круглых скобках
-      local searchStart = 1
-
-      while true do
-        -- Находим подстроку
-        local oldSubstringStart, oldSubstringEnd =
-          getSubstringStartEnd(searchStart)
-
-        -- Если ничего не найдено — выходим из цикла
-        if not oldSubstringStart then
-          return true
-        end
-
-        -- Извлекаем подстроку
-        local oldSubstring =
-          codeFragment:sub(oldSubstringStart, oldSubstringEnd)
-
-        -- Форматируем подстроку
-        local newSubstring = oldSubstring
-          :gsub("%(", "(\n  ")
-          :gsub(",%s*", ",\n  ")
-          :gsub("%)", "\n)")
-
-        -- Подставляем форматированную подстроку
-        codeFragment = replaceAt(
-          codeFragment,
-          oldSubstringStart,
-          oldSubstringEnd,
-          newSubstring
-        )
-
-        -- Пересчитываем границы новой подстроки
-        local newSubstringEnd = oldSubstringStart + #newSubstring - 1
-
-        -- Длина оставшейся части строки
-        local unformattedCodeFragmentLength = #codeFragment - newSubstringEnd
-
-        -- Проверяем условие выхода
-        if unformattedCodeFragmentLength < MAX_HOVER_WIDTH_SYMBOLS then
-          return false
-        end
-
-        -- Сдвигаем `searchStart`, чтобы избежать зацикливания
-        searchStart = newSubstringEnd + 1
-      end
-    end
-
-    if codeFragment == "```go" then
-      isInsideCodeBlock = true
+    if not is_inside_code_block then
       goto continue
     end
 
-    if codeFragment == "```" then
-      isInsideCodeBlock = false
-      goto continue
-    end
-
-    if not isInsideCodeBlock then
-      goto continue
-    end
-
-    -- переносим комментарии на другую строку
-    local comment = codeFragment:match("//.*")
+    local comment = code_fragment:match("//.*")
     if comment then
-      lines[codeIndex] = comment .. "\n" .. codeFragment:gsub("//.*", "")
+      lines[code_index] = comment .. "\n" .. code_fragment:gsub("//.*", "")
       goto continue
     end
 
-    -- vim.notify(codeFragment, vim.log.levels.INFO)
-    -- vim.notify(tostring(#codeFragment), vim.log.levels.INFO)
-
-    if #codeFragment < MAX_HOVER_WIDTH_SYMBOLS then
-      if codeFragment:match("^%s") then
-        indentCode()
-        lines[codeIndex] = codeFragment
+    if #code_fragment < MAX_HOVER_WIDTH_SYMBOLS then
+      if code_fragment:match("^%s") then
+        lines[code_index] = indent_code(code_fragment)
       end
       goto continue
     end
 
-    local needsMoreFormatting = format(searchWithComma)
-    if needsMoreFormatting then
-      format(searchWithoutComma)
+    local formatted_code, needs_more_formatting =
+      format_code_with_commas(code_fragment)
+    code_fragment = formatted_code
+    if needs_more_formatting then
+      code_fragment = format_code_without_commas(code_fragment)
     end
 
-    if codeFragment:match("^%s") then
-      indentCode()
-    end
+    lines[code_index] = code_fragment
 
-    lines[codeIndex] = codeFragment
+    if code_fragment:match("^%s") then
+      lines[code_index] = indent_code(code_fragment)
+    end
 
     ::continue::
   end
@@ -293,8 +290,13 @@ return {
         })
       end,
       ["gopls"] = function()
-        setup_hover_formatting()
-        lspconfig["gopls"].setup({})
+        lspconfig["gopls"].setup({
+          settings = {
+            gopls = {
+              buildFlags = { "-tags=integration" },
+            },
+          },
+        })
       end,
       ["emmet_ls"] = function()
         -- configure emmet language server
