@@ -1,4 +1,4 @@
--- убирает ---, ***, ___ из содержимого вывода hover
+-- убирает все кроме сигнатуры функции из hover
 local function setup_horizontal_rules_remover()
   local orig_hover = vim.lsp.handlers["textDocument/hover"]
 
@@ -7,21 +7,29 @@ local function setup_horizontal_rules_remover()
       local util = vim.lsp.util
       local lines = util.convert_input_to_markdown_lines(result.contents)
 
-      -- Фильтрация горизонтальных линий
+      -- Собираем только блоки ```...``` вместе с ```
+      local inside_codeblock = false
       local filtered = {}
+
       for _, line in ipairs(lines) do
-        if line:match("^%s*[-*_]%s*[-*_]%s*[-*_]%s*$") then
-          table.insert(filtered, "======") -- или "" чтобы убрать
-        else
+        if line:match("^```") then
+          inside_codeblock = not inside_codeblock
+          table.insert(filtered, line)
+        elseif inside_codeblock then
           table.insert(filtered, line)
         end
       end
 
-      result.contents = table.concat(filtered, "\n")
-    end
+      -- Если не было кодовых блоков — ничего не показывать
+      if vim.tbl_isempty(filtered) then
+        return
+      end
 
-    -- вызвать оригинальный hover-handler
-    return orig_hover(err, result, ctx, config)
+      -- Показываем только блоки кода
+      vim.lsp.util.open_floating_preview(filtered, "markdown", config)
+    else
+      orig_hover(err, result, ctx, config)
+    end
   end
 end
 
