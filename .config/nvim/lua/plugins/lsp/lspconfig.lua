@@ -1,198 +1,27 @@
-local MAX_HOVER_WIDTH_SYMBOLS = 50
-local MAX_HOVER_HEIGHT_SYMBOLS = 15
+-- убирает ---, ***, ___ из содержимого вывода hover
+local function setup_horizontal_rules_remover()
+  local orig_hover = vim.lsp.handlers["textDocument/hover"]
 
----@param code_fragment string
----@param search_start integer
----@param should_contain_comma boolean
----@return nil | integer
----@return nil | integer
-local function search_in_parentheses(
-  code_fragment,
-  search_start,
-  should_contain_comma
-)
-  local pos = search_start or 1
+  vim.lsp.handlers["textDocument/hover"] = function(err, result, ctx, config)
+    if result and result.contents then
+      local util = vim.lsp.util
+      local lines = util.convert_input_to_markdown_lines(result.contents)
 
-  while true do
-    local old_substring_start, old_substring_end =
-      code_fragment:find("%b()", pos)
-    if not old_substring_start then
-      return nil, nil
-    end
-
-    local inside =
-      code_fragment:sub(old_substring_start + 1, old_substring_end - 1)
-    local has_comma = inside:find(",", 1, true)
-
-    if
-      (should_contain_comma and has_comma)
-      or (not should_contain_comma and not has_comma)
-    then
-      return old_substring_start, old_substring_end
-    end
-
-    pos = old_substring_end + 1
-  end
-end
-
----@param code_fragment string
----@param get_substring_start_end function
----@return string
----@return boolean
-local function format_code_fragment(code_fragment, get_substring_start_end)
-  local search_start = 1
-  local should_format_beginning = false
-
-  local first_substring_start, _ =
-    get_substring_start_end(search_start, code_fragment)
-
-  vim.notify(tostring(first_substring_start))
-
-  if first_substring_start > MAX_HOVER_WIDTH_SYMBOLS then
-    should_format_beginning = true
-  end
-
-  while true do
-    local old_substring_start, old_substring_end =
-      get_substring_start_end(search_start, code_fragment)
-    if not old_substring_start then
-      return code_fragment, true
-    end
-
-    local old_substring =
-      code_fragment:sub(old_substring_start, old_substring_end)
-    vim.notify(old_substring)
-    local new_substring =
-      old_substring:gsub("%(", "(\n  "):gsub(",%s*", ",\n  "):gsub("%)", "\n)")
-    vim.notify(new_substring)
-
-    code_fragment = code_fragment:sub(1, old_substring_start - 1)
-      .. new_substring
-      .. code_fragment:sub(old_substring_end + 1)
-
-    local _, new_substring_end = code_fragment:find(new_substring)
-
-    if #code_fragment - new_substring_end < MAX_HOVER_WIDTH_SYMBOLS then
-      if should_format_beginning then
-        return code_fragment, true
+      -- Фильтрация горизонтальных линий
+      local filtered = {}
+      for _, line in ipairs(lines) do
+        if line:match("^%s*[-*_]%s*[-*_]%s*[-*_]%s*$") then
+          table.insert(filtered, "======") -- или "" чтобы убрать
+        else
+          table.insert(filtered, line)
+        end
       end
 
-      vim.notify("early")
-      return code_fragment, false
+      result.contents = table.concat(filtered, "\n")
     end
 
-    -- local new_substring_end = old_substring_start + #new_substring
-    --
-    -- if #code_fragment - new_substring_end < MAX_HOVER_WIDTH_SYMBOLS then
-    --   return code_fragment, false
-    -- end
-
-    search_start = old_substring_end + 1
-  end
-end
-
----@param code_fragment string
----@return string
----@return boolean
-local function format_code_with_commas(code_fragment)
-  return format_code_fragment(
-    code_fragment,
-    function(search_start, updated_code_fragment)
-      return search_in_parentheses(updated_code_fragment, search_start, true)
-    end
-  )
-end
-
----@param code_fragment string
----@return string
-local function format_code_without_commas(code_fragment)
-  local code, _ = format_code_fragment(
-    code_fragment,
-    function(search_start, updated_code_fragment)
-      return search_in_parentheses(updated_code_fragment, search_start, false)
-    end
-  )
-  return code
-end
-
----@param code_fragment string
----@return string
-local function indent_code(code_fragment)
-  local code, _ = code_fragment:gsub("\n", "\n  "):gsub("^%s+", "  ")
-  return code
-end
-
----@param lines table
----@return table
-local function format_code_in_parentheses(lines)
-  local is_inside_code_block = false
-
-  for code_index, code_fragment in ipairs(lines) do
-    if code_fragment == "```go" then
-      is_inside_code_block = true
-    elseif code_fragment == "```" then
-      is_inside_code_block = false
-    end
-
-    if not is_inside_code_block then
-      goto continue
-    end
-
-    local comment = code_fragment:match("//.*")
-    if comment then
-      lines[code_index] = comment .. "\n" .. code_fragment:gsub("//.*", "")
-      goto continue
-    end
-
-    if #code_fragment < MAX_HOVER_WIDTH_SYMBOLS then
-      if code_fragment:match("^%s") then
-        lines[code_index] = indent_code(code_fragment)
-      end
-      goto continue
-    end
-
-    local formatted_code, needs_more_formatting =
-      format_code_with_commas(code_fragment)
-    code_fragment = formatted_code
-    if needs_more_formatting then
-      code_fragment = format_code_without_commas(code_fragment)
-    end
-
-    lines[code_index] = code_fragment
-
-    if code_fragment:match("^%s") then
-      lines[code_index] = indent_code(code_fragment)
-    end
-
-    ::continue::
-  end
-
-  return lines
-end
-
-local function setup_hover_formatting()
-  vim.lsp.handlers["textDocument/hover"] = function(_, result, ctx, config)
-    if not (result and result.contents) then
-      return
-    end
-
-    local markdown_lines =
-      vim.lsp.util.convert_input_to_markdown_lines(result.contents)
-    markdown_lines = format_code_in_parentheses(markdown_lines)
-    markdown_lines = vim.lsp.util.trim_empty_lines(markdown_lines)
-
-    if vim.tbl_isempty(markdown_lines) then
-      return
-    end
-
-    -- настройка попапа с документацией
-    config = {
-      border = "solid",
-      max_width = MAX_HOVER_WIDTH_SYMBOLS,
-      max_height = MAX_HOVER_HEIGHT_SYMBOLS,
-    }
-
-    vim.lsp.util.open_floating_preview(markdown_lines, "markdown", config)
+    -- вызвать оригинальный hover-handler
+    return orig_hover(err, result, ctx, config)
   end
 end
 
@@ -262,11 +91,11 @@ return {
         opts.desc = "Go to next diagnostic"
         keymap.set("n", "]d", vim.diagnostic.goto_next, opts) -- jump to next diagnostic in buffer
 
-        -- opts.desc = "Show documentation for what is under cursor"
-        -- keymap.set("n", "K", vim.lsp.buf.hover, opts) -- show documentation for what is under cursor
-
         opts.desc = "Restart LSP"
         keymap.set("n", "<leader>rs", ":LspRestart<CR>", opts) -- mapping to restart lsp if necessary
+
+        -- убираем из вывода hover ---, ___, ***
+        setup_horizontal_rules_remover()
       end,
     })
 
