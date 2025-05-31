@@ -1,5 +1,5 @@
 -- убирает все кроме сигнатуры функции из hover
-local function setup_horizontal_rules_remover()
+local function setup_hover_cleaner()
   local orig_hover = vim.lsp.handlers["textDocument/hover"]
 
   vim.lsp.handlers["textDocument/hover"] = function(err, result, ctx, config)
@@ -102,8 +102,7 @@ return {
         opts.desc = "Restart LSP"
         keymap.set("n", "<leader>rs", ":LspRestart<CR>", opts) -- mapping to restart lsp if necessary
 
-        -- убираем из вывода hover ---, ___, ***
-        setup_horizontal_rules_remover()
+        setup_hover_cleaner()
       end,
     })
 

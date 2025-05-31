@@ -1,26 +1,26 @@
--- return {
---   "catppuccin/nvim",
---   priority = 1000,
---   config = function()
---     require("catppuccin").setup({
---       flavour = "frappe",
---       custom_highlights = function(colors)
---         return {
---           -- Пример выделения для Go пакетов
---           ["@namespace"] = {
---             -- fg = colors.blue,
---             style = { "italic" }, -- Стиль текста
---           },
---           Comment = {
---             fg = colors.overlay1, -- Цвет комментариев
---             style = { "italic" },
---           },
---         }
---       end,
---     })
---     vim.cmd("colorscheme catppuccin")
---   end,
--- }
+return {
+  "catppuccin/nvim",
+  priority = 1000,
+  config = function()
+    require("catppuccin").setup({
+      flavour = "frappe",
+      custom_highlights = function(colors)
+        return {
+          -- Пример выделения для Go пакетов
+          ["@namespace"] = {
+            -- fg = colors.blue,
+            style = { "italic" }, -- Стиль текста
+          },
+          Comment = {
+            fg = colors.overlay1, -- Цвет комментариев
+            style = { "italic" },
+          },
+        }
+      end,
+    })
+    vim.cmd("colorscheme catppuccin")
+  end,
+}
 
 -- return {
 --   "rebelot/kanagawa.nvim",
@@ -67,11 +67,11 @@
 --   end,
 -- }
 
-return {
-  "sainnhe/gruvbox-material",
-  priority = 1000,
-  config = function()
-    vim.g.gruvbox_material_enable_italic = true
-    vim.cmd.colorscheme("gruvbox-material")
-  end,
-}
+-- return {
+--   "sainnhe/gruvbox-material",
+--   priority = 1000,
+--   config = function()
+--     vim.g.gruvbox_material_enable_italic = true
+--     vim.cmd.colorscheme("gruvbox-material")
+--   end,
+-- }
