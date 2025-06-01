@@ -24,7 +24,7 @@ opt.splitright = true
 opt.splitbelow = true
 
 if vim.g.neovide then
-  vim.o.guifont = "JetBrainsMono NFM:h14" -- text below applies for VimScript
-  vim.g.neovide_scale_factor = 1.7
+  vim.o.guifont = "JetBrainsMono NFM:h24" -- text below applies for VimScript
+  -- vim.g.neovide_scale_factor = 1.1
   vim.opt.linespace = -1
 end
