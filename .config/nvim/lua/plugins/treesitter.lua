@@ -17,6 +17,8 @@ return {
       },
       -- enable indentation
       indent = { enable = true },
+      auto_install = true,
+      sync_install = true,
       -- ensure these language parsers are installed
       ensure_installed = {
         "svelte",
