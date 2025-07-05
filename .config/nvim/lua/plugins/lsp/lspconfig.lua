@@ -82,19 +82,28 @@ local function setup_lsp_handlers()
   local lspconfig = require("lspconfig")
   local mason_lspconfig = require("mason-lspconfig")
   local cmp_nvim_lsp = require("cmp_nvim_lsp")
+  local navic = require("nvim-navic")
 
   -- autocompletion
   local capabilities = cmp_nvim_lsp.default_capabilities()
+
+  local on_attach = function(client, bufnr)
+    if client.server_capabilities.documentSymbolProvider then
+      navic.attach(client, bufnr)
+    end
+  end
 
   mason_lspconfig.setup_handlers({
     -- default handler for installed servers
     function(server_name)
       lspconfig[server_name].setup({
         capabilities = capabilities,
+        on_attach = on_attach,
       })
     end,
     ["gopls"] = function()
       lspconfig["gopls"].setup({
+        on_attach = on_attach,
         settings = {
           gopls = {
             buildFlags = { "-tags=integration" },
@@ -105,6 +114,7 @@ local function setup_lsp_handlers()
     ["emmet_ls"] = function()
       -- configure emmet language server
       lspconfig["emmet_ls"].setup({
+        on_attach = on_attach,
         capabilities = capabilities,
         filetypes = {
           "html",
@@ -123,6 +133,7 @@ local function setup_lsp_handlers()
       lspconfig["svelte"].setup({
         capabilities = capabilities,
         on_attach = function(client, bufnr)
+          on_attach(client, bufnr)
           vim.api.nvim_create_autocmd("BufWritePost", {
             pattern = { "*.js", "*.ts" },
             callback = function(ctx)
@@ -136,6 +147,7 @@ local function setup_lsp_handlers()
     ["lua_ls"] = function()
       -- configure lua server (with special settings)
       lspconfig["lua_ls"].setup({
+        on_attach = on_attach,
         capabilities = capabilities,
         settings = {
           Lua = {
@@ -150,6 +162,17 @@ local function setup_lsp_handlers()
         },
       })
     end,
+  })
+
+  mason_lspconfig.setup({
+    -- list of servers for mason to install
+    ensure_installed = {
+      "ts_ls",
+      "html",
+      "cssls",
+      "lua_ls",
+      "gopls",
+    },
   })
 end
 

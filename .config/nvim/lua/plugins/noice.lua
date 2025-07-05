@@ -1,4 +1,4 @@
-return {
+local _ = {
   "folke/noice.nvim",
   event = "VeryLazy",
   dependencies = {
@@ -31,3 +31,4 @@ return {
     })
   end,
 }
+return {}
