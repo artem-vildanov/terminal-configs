@@ -13,7 +13,7 @@ return {
         svelte = { "prettier" },
         css = { "prettier" },
         html = { "prettier" },
-        json = { "prettier" },
+        json = { "fixjson" },
         yaml = { "prettier" },
         markdown = { "prettier" },
         graphql = { "prettier" },

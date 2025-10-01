@@ -28,3 +28,6 @@ if vim.g.neovide then
   -- vim.g.neovide_scale_factor = 1.1
   vim.opt.linespace = -1
 end
+
+-- for auto sessions
+vim.o.sessionoptions = 'blank,buffers,curdir,folds,help,tabpages,winsize,winpos,terminal,localoptions'

@@ -20,16 +20,6 @@ return {
           },
         },
       },
-      extensions = {
-        project = {
-          base_dirs = {
-            "~/Repos/service-ratings/",
-            "~/Repos/service-ratings-buyer/",
-            "~/Repos/service-ratings-notification/",
-            "~/Repos/service-deal-prediction-aggregator/",
-          },
-        },
-      },
     })
     telescope.load_extension("fzf")
 
