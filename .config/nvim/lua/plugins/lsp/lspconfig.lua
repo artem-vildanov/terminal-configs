@@ -101,6 +101,27 @@ local function setup_lsp_handlers()
         on_attach = on_attach,
       })
     end,
+    ["pyright"] = function()
+      lspconfig["pyright"].setup({
+        on_attach = on_attach,
+        settings = {
+          python = {
+            analysis = {
+              autoSearchPaths = true,
+              useLibraryCodeForTypes = true,
+              typeCheckingMode = "basic",
+            },
+          },
+        },
+        before_init = function(_, config)
+          local venv_path = vim.fn.getcwd() .. "/.venv"
+          if vim.fn.isdirectory(venv_path) == 1 then
+            config.settings.python.pythonPath = venv_path .. "/bin/python"
+            config.settings.python.venvPath = "."
+          end
+        end,
+      })
+    end,
     ["gopls"] = function()
       lspconfig["gopls"].setup({
         on_attach = on_attach,

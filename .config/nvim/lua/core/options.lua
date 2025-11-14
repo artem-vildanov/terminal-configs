@@ -31,3 +31,6 @@ end
 
 -- for auto sessions
 vim.o.sessionoptions = 'blank,buffers,curdir,folds,help,tabpages,winsize,winpos,terminal,localoptions'
+
+-- ftplugin
+vim.g.do_filetype_lua = 1
